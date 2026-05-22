@@ -12,5 +12,7 @@ uploads/*
 !uploads/.gitkeep
 
 model/*.onnx
+!model/*.onnx
 !model/.gitkeep
+
 
