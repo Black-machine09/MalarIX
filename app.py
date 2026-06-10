@@ -19,6 +19,10 @@ from api.routes.health import router as health_router
 from api.routes.predict import router as predict_router
 from api.routes.stats import router as stats_router
 from api.routes.occurrences import router as occurrences_router
+from api.routes.auth import router as auth_router
+from api.routes.analyze import router as analyze_router
+from api.routes.results import router as results_router
+from api.routes.uploads import router as uploads_router
 from core.config import get_settings
 from core.logger import configure_logging
 
@@ -70,6 +74,10 @@ def create_app() -> FastAPI:
     app.include_router(predict_router)
     app.include_router(stats_router)
     app.include_router(occurrences_router)
+    app.include_router(auth_router)
+    app.include_router(analyze_router)
+    app.include_router(results_router)
+    app.include_router(uploads_router)
     return app
 
 
