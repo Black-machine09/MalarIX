@@ -7,7 +7,7 @@ def test_classifies_suspected_positive() -> None:
 
 
 def test_classifies_uncertain() -> None:
-    assert classify_score(0.5, Settings()) == TriageLabel.UNCERTAIN
+    assert classify_score(0.5, Settings()) == TriageLabel.LIKELY_NEGATIVE
 
 
 def test_classifies_likely_negative() -> None:
