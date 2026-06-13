@@ -1,7 +1,5 @@
 from fastapi import FastAPI
-from fastapi import status
-from fastapi.responses import JSONResponse
-
+from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables from .env (if python-dotenv is installed).
 # This keeps local dev simple while still allowing real env vars in production.
@@ -12,9 +10,6 @@ try:
 except Exception:
     pass
 
-
-from fastapi.middleware.cors import CORSMiddleware
-
 from api.routes.health import router as health_router
 from api.routes.predict import router as predict_router
 from api.routes.stats import router as stats_router
@@ -23,7 +18,6 @@ from api.routes.exams import router as exams_router
 from core.database import init_db
 from core.config import get_settings
 from core.logger import configure_logging
-
 
 
 def create_app() -> FastAPI:
@@ -68,7 +62,6 @@ def create_app() -> FastAPI:
                     "or set DEMO_MODE=true."
                 )
 
-
     # Ensure SQLite schema exists.
     init_db()
 
@@ -77,9 +70,8 @@ def create_app() -> FastAPI:
     app.include_router(stats_router)
     app.include_router(occurrences_router)
     app.include_router(exams_router)
+
     return app
-
-
 
 
 app = create_app()
