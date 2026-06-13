@@ -19,8 +19,11 @@ from api.routes.health import router as health_router
 from api.routes.predict import router as predict_router
 from api.routes.stats import router as stats_router
 from api.routes.occurrences import router as occurrences_router
+from api.routes.exams import router as exams_router
+from core.database import init_db
 from core.config import get_settings
 from core.logger import configure_logging
+
 
 
 def create_app() -> FastAPI:
@@ -66,11 +69,16 @@ def create_app() -> FastAPI:
                 )
 
 
+    # Ensure SQLite schema exists.
+    init_db()
+
     app.include_router(health_router)
     app.include_router(predict_router)
     app.include_router(stats_router)
     app.include_router(occurrences_router)
+    app.include_router(exams_router)
     return app
+
 
 
 

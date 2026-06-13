@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MalarIX — Triagem de Malária</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0A1628;
+    --navy-mid: #12233E;
+    --navy-light: #1C3054;
+    --slate: #4A6FA5;
+    --slate-light: #6B8EC4;
+    --offwhite: #F0F4FA;
+    --muted: #8EA5C8;
+    --crimson: #C0392B;
+    --crimson-bg: rgba(192,57,43,0.12);
+    --emerald: #1A7A4A;
+    --emerald-bg: rgba(26,122,74,0.12);
+    --amber: #D97706;
+    --amber-bg: rgba(217,119,6,0.12);
+    --border: rgba(74,111,165,0.25);
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    background: var(--navy);
+    color: var(--offwhite);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--navy-mid);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-mark {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--offwhite);
+  }
+
+  .logo-mark span {
+    color: var(--crimson);
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 8px 4px;
+    margin-top: 8px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    text-align: left;
+    width: 100%;
+  }
+
+  .nav-link:hover { background: var(--navy-light); color: var(--offwhite); }
+  .nav-link.active { background: var(--navy-light); color: var(--offwhite); }
+  .nav-link.active .nav-icon { color: var(--slate-light); }
+
+  .nav-icon { font-size: 16px; width: 18px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .health-dot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .dot.online { background: var(--emerald); box-shadow: 0 0 6px var(--emerald); }
+  .dot.offline { background: var(--crimson); }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: 220px;
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    background: var(--navy-mid);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    font-family: var(--font-body);
+  }
+
+  .btn-primary {
+    background: var(--crimson);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #a93226; }
+
+  .btn-ghost {
+    background: var(--navy-light);
+    color: var(--offwhite);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--slate); }
+
+  .content {
+    flex: 1;
+    padding: 32px;
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── CARDS ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .stat-card.total::before { background: var(--slate); }
+  .stat-card.positive::before { background: var(--crimson); }
+  .stat-card.negative::before { background: var(--emerald); }
+  .stat-card.uncertain::before { background: var(--amber); }
+
+  .stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+
+  .stat-card.total .stat-value { color: var(--offwhite); }
+  .stat-card.positive .stat-value { color: var(--crimson); }
+  .stat-card.negative .stat-value { color: var(--emerald); }
+  .stat-card.uncertain .stat-value { color: var(--amber); }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ── TABLE ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .table-wrap {
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: 11px 16px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--navy);
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--navy-light); }
+
+  tbody td {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-positive {
+    background: var(--crimson-bg);
+    color: #e74c3c;
+    border: 1px solid rgba(192,57,43,0.3);
+  }
+
+  .badge-negative {
+    background: var(--emerald-bg);
+    color: #27ae60;
+    border: 1px solid rgba(26,122,74,0.3);
+  }
+
+  .badge-uncertain {
+    background: var(--amber-bg);
+    color: #f39c12;
+    border: 1px solid rgba(217,119,6,0.3);
+  }
+
+  /* ── TRIAGE FORM ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  input, select {
+    background: var(--navy);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 12px;
+    color: var(--offwhite);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--slate);
+  }
+
+  select option { background: var(--navy-mid); }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--navy);
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--slate);
+    background: var(--navy-light);
+  }
+
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .upload-icon { font-size: 36px; margin-bottom: 10px; opacity: 0.5; }
+
+  .upload-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .upload-hint { font-size: 12px; color: var(--muted); }
+
+  .file-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .file-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: var(--navy-light);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--offwhite);
+  }
+
+  .file-remove {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    display: flex;
+  }
+
+  .file-remove:hover { color: var(--crimson); }
+
+  /* ── RESULT PANEL ── */
+  .result-panel {
+    margin-top: 24px;
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    display: none;
+  }
+
+  .result-panel.visible { display: block; }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  /* Signature element: confidence ring */
+  .confidence-ring {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+  }
+
+  .confidence-ring svg {
+    transform: rotate(-90deg);
+  }
+
+  .ring-track {
+    fill: none;
+    stroke: var(--navy);
+    stroke-width: 8;
+  }
+
+  .ring-fill {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 263;
+    stroke-dashoffset: 263;
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .ring-fill.positive { stroke: var(--crimson); }
+  .ring-fill.negative { stroke: var(--emerald); }
+  .ring-fill.uncertain { stroke: var(--amber); }
+
+  @keyframes ringPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .ring-fill.positive { animation: ringPulse 2s ease-in-out infinite; }
+
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .result-meta { flex: 1; }
+
+  .result-label {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+  }
+
+  .result-label.positive { color: var(--crimson); }
+  .result-label.negative { color: var(--emerald); }
+  .result-label.uncertain { color: var(--amber); }
+
+  .result-desc { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+
+  .result-stats {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .result-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .result-stat-val {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .result-stat-key {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .model-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: var(--navy);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 12px;
+  }
+
+  /* ── ERROR / LOADING ── */
+  .error-box {
+    background: var(--crimson-bg);
+    border: 1px solid rgba(192,57,43,0.3);
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: #e74c3c;
+    font-size: 13px;
+    margin-top: 16px;
+    display: none;
+  }
+
+  .error-box.visible { display: block; }
+  .error-code { font-family: var(--font-mono); font-size: 11px; opacity: 0.7; margin-bottom: 3px; }
+
+  .loading-overlay {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px;
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 16px;
+  }
+
+  .loading-overlay.visible { display: flex; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--slate);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  /* ── PAGINATION ── */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0 0;
+  }
+
+  .pagination-info { font-size: 12px; color: var(--muted); }
+
+  .pagination-btns { display: flex; gap: 6px; }
+
+  .page-btn {
+    padding: 5px 12px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--navy-mid);
+    color: var(--offwhite);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .page-btn:disabled { opacity: 0.3; cursor: default; }
+  .page-btn:not(:disabled):hover { background: var(--navy-light); }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .filter-bar select, .filter-bar input {
+    flex: 1;
+    min-width: 140px;
+    max-width: 200px;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+  }
+
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state .empty-title { font-family: var(--font-display); font-size: 16px; color: var(--offwhite); margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; }
+
+  /* ── CHART (simple bars) ── */
+  .chart-section {
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 80px;
+    margin-top: 16px;
+  }
+
+  .chart-bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .chart-bar {
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    min-height: 3px;
+    transition: height 0.6s ease;
+    max-width: 28px;
+  }
+
+  .chart-bar.pos { background: var(--crimson); opacity: 0.8; }
+  .chart-bar.neg { background: var(--emerald); opacity: 0.8; }
+
+  .chart-day {
+    font-size: 9px;
+    color: var(--muted);
+    text-align: center;
+    font-family: var(--font-mono);
+    white-space: nowrap;
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* ── FORM CARD ── */
+  .form-card {
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .form-card-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+  }
+
+  .confidence-pct { color: var(--offwhite); }
+
+  @media (max-width: 768px) {
+    .sidebar { width: 100%; height: 56px; bottom: auto; flex-direction: row; align-items: center; padding: 0 16px; }
+    .sidebar-logo { border-bottom: none; border-right: 1px solid var(--border); padding: 12px 16px; }
+    .sidebar-nav { flex-direction: row; padding: 0 8px; }
+    .nav-label { display: none; }
+    .sidebar-footer { display: none; }
+    .main { margin-left: 0; margin-top: 56px; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">Malar<span>IX</span></div>
+    <div class="logo-sub">Triagem de Malária</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Navegação</div>
+    <button class="nav-link active" onclick="navigate('dashboard')">
+      <span class="nav-icon">◼</span> Dashboard
+    </button>
+    <button class="nav-link" onclick="navigate('triage')">
+      <span class="nav-icon">＋</span> Nova Triagem
+    </button>
+    <button class="nav-link" onclick="navigate('history')">
+      <span class="nav-icon">≡</span> Histórico
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="health-dot">
+      <div class="dot" id="healthDot"></div>
+      <span id="healthLabel">Verificando API…</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary" onclick="navigate('triage')">＋ Nova Triagem</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ── PAGE: DASHBOARD ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card total">
+          <div class="stat-label">Total de Triagens</div>
+          <div class="stat-value" id="statTotal">—</div>
+          <div class="stat-sub">exames registrados</div>
+        </div>
+        <div class="stat-card positive">
+          <div class="stat-label">Suspeitos Positivos</div>
+          <div class="stat-value" id="statPositive">—</div>
+          <div class="stat-sub">requerem atenção</div>
+        </div>
+        <div class="stat-card negative">
+          <div class="stat-label">Provavelmente Negativos</div>
+          <div class="stat-value" id="statNegative">—</div>
+          <div class="stat-sub">sem suspeita</div>
+        </div>
+        <div class="stat-card uncertain">
+          <div class="stat-label">Incertos</div>
+          <div class="stat-value" id="statUncertain">—</div>
+          <div class="stat-sub">revisão necessária</div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-section">
+        <div class="section-header">
+          <div class="section-title">Ocorrências por Dia</div>
+        </div>
+        <div class="chart-bars" id="chartBars">
+          <div class="empty-state" style="flex:1;padding:20px"><p>Carregando dados…</p></div>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--crimson)"></div> Suspeito Positivo</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--emerald)"></div> Provavelmente Negativo</div>
+        </div>
+      </div>
+
+      <!-- Recent -->
+      <div class="section-header">
+        <div class="section-title">Últimas Ocorrências</div>
+        <button class="btn btn-ghost" onclick="navigate('history')" style="font-size:12px;padding:6px 12px">Ver tudo</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID da Triagem</th>
+              <th>Data</th>
+              <th>Resultado</th>
+              <th>Confiança</th>
+            </tr>
+          </thead>
+          <tbody id="recentTableBody">
+            <tr><td colspan="4"><div class="empty-state"><p>Carregando…</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── PAGE: TRIAGE ── -->
+    <div class="page" id="page-triage">
+
+      <div class="form-card">
+        <div class="form-card-title">🧑‍⚕️ Dados do Paciente</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="patientName">Nome do Paciente</label>
+            <input type="text" id="patientName" placeholder="Ex.: Maria Silva" />
+          </div>
+          <div class="form-group">
+            <label for="birthDate">Data de Nascimento</label>
+            <input type="date" id="birthDate" />
+          </div>
+          <div class="form-group">
+            <label for="gender">Sexo</label>
+            <select id="gender">
+              <option value="">Selecione…</option>
+              <option value="F">Feminino</option>
+              <option value="M">Masculino</option>
+              <option value="O">Outro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="examDate">Data do Exame</label>
+            <input type="date" id="examDate" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-card-title">🔬 Imagens de Lâmina</div>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" multiple />
+          <div class="upload-icon">🖼</div>
+          <div class="upload-title">Arraste imagens aqui ou clique para selecionar</div>
+          <div class="upload-hint">Formatos aceitos: JPG, JPEG, PNG</div>
+        </div>
+        <div class="file-list" id="fileList"></div>
+      </div>
+
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button class="btn btn-primary" id="analyzeBtn" onclick="submitTriage()" style="padding:10px 28px;font-size:14px">
+          🔍 Analisar
+        </button>
+        <button class="btn btn-ghost" onclick="resetTriage()">Limpar</button>
+      </div>
+
+      <div class="loading-overlay" id="triageLoading">
+        <div class="spinner"></div>
+        <span id="loadingMsg">Enviando imagens para análise…</span>
+      </div>
+
+      <div class="error-box" id="triageError">
+        <div class="error-code" id="errorCode"></div>
+        <div id="errorMsg"></div>
+      </div>
+
+      <!-- Result -->
+      <div class="result-panel" id="resultPanel">
+        <div class="result-header">
+          <div class="confidence-ring">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle class="ring-track" cx="50" cy="50" r="42" />
+              <circle class="ring-fill" id="ringFill" cx="50" cy="50" r="42" />
+            </svg>
+            <div class="ring-center" id="ringCenter">—</div>
+          </div>
+          <div class="result-meta">
+            <div class="result-label" id="resultLabel">—</div>
+            <div class="result-desc" id="resultDesc">—</div>
+            <div class="result-stats">
+              <div class="result-stat">
+                <div class="result-stat-val" id="resProcessed">—</div>
+                <div class="result-stat-key">Imagens Processadas</div>
+              </div>
+              <div class="result-stat">
+                <div class="result-stat-val" id="resRejected">—</div>
+                <div class="result-stat-key">Rejeitadas</div>
+              </div>
+            </div>
+            <div class="model-tag" id="modelTag">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: HISTORY ── -->
+    <div class="page" id="page-history">
+      <div class="filter-bar">
+        <select id="filterLabel" onchange="loadHistory()">
+          <option value="">Todos os resultados</option>
+          <option value="suspected_positive">Suspeito Positivo</option>
+          <option value="likely_negative">Provavelmente Negativo</option>
+          <option value="uncertain">Incerto</option>
+        </select>
+        <input type="date" id="filterFrom" placeholder="De" onchange="loadHistory()" title="Data inicial" />
+        <input type="date" id="filterTo" placeholder="Até" onchange="loadHistory()" title="Data final" />
+        <button class="btn btn-ghost" onclick="clearHistoryFilters()" style="font-size:12px;padding:6px 12px">Limpar filtros</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID da Triagem</th>
+              <th>Data / Hora</th>
+              <th>Resultado</th>
+              <th>Confiança</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <tr><td colspan="4"><div class="empty-state"><p>Carregando…</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <div class="pagination-info" id="paginationInfo">—</div>
+        <div class="pagination-btns">
+          <button class="page-btn" id="prevBtn" onclick="changePage(-1)" disabled>← Anterior</button>
+          <button class="page-btn" id="nextBtn" onclick="changePage(1)" disabled>Próxima →</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<script>
+const API = 'http://localhost:8000';
+let selectedFiles = [];
+let historyOffset = 0;
+const LIMIT = 20;
+let historyTotal = 0;
+
+// ── NAVIGATION ──
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+
+  const titles = { dashboard: 'Dashboard', triage: 'Nova Triagem', history: 'Histórico' };
+  document.getElementById('topbarTitle').textContent = titles[page] || page;
+
+  const idx = ['dashboard','triage','history'].indexOf(page);
+  document.querySelectorAll('.nav-link')[idx]?.classList.add('active');
+
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'history') { historyOffset = 0; loadHistory(); }
+}
+
+// ── HEALTH ──
+async function checkHealth() {
+  try {
+    const r = await fetch(API + '/health');
+    const dot = document.getElementById('healthDot');
+    const lbl = document.getElementById('healthLabel');
+    if (r.ok) {
+      dot.className = 'dot online';
+      lbl.textContent = 'API online';
+    } else throw new Error();
+  } catch {
+    document.getElementById('healthDot').className = 'dot offline';
+    document.getElementById('healthLabel').textContent = 'API offline';
+  }
+}
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  try {
+    const [statsRes, occRes] = await Promise.all([
+      fetch(API + '/api/v1/stats/dashboard').then(r => r.json()),
+      fetch(API + '/api/v1/occurrences?limit=5&offset=0').then(r => r.json())
+    ]);
+
+    if (statsRes.summary) {
+      const s = statsRes.summary;
+      document.getElementById('statTotal').textContent = s.total_occurrences ?? '—';
+      document.getElementById('statPositive').textContent = s.suspected_positive ?? '—';
+      document.getElementById('statNegative').textContent = s.likely_negative ?? '—';
+      document.getElementById('statUncertain').textContent = s.uncertain ?? '—';
+    }
+
+    if (statsRes.time_series) renderChart(statsRes.time_series);
+
+    if (occRes.items) renderRecentTable(occRes.items);
+
+  } catch(e) {
+    console.error('Dashboard error:', e);
+  }
+}
+
+function renderChart(series) {
+  const container = document.getElementById('chartBars');
+  if (!series.length) {
+    container.innerHTML = '<div class="empty-state" style="flex:1;padding:16px"><p>Nenhum dado disponível.</p></div>';
+    return;
+  }
+  const maxVal = Math.max(...series.map(d => (d.suspected_positive||0) + (d.likely_negative||0)), 1);
+  const recent = series.slice(-14);
+  container.innerHTML = recent.map(d => {
+    const total = (d.suspected_positive||0) + (d.likely_negative||0);
+    const posH = Math.max(((d.suspected_positive||0) / maxVal) * 72, d.suspected_positive ? 4 : 0);
+    const negH = Math.max(((d.likely_negative||0) / maxVal) * 72, d.likely_negative ? 4 : 0);
+    const day = d.day ? d.day.slice(5) : '';
+    return `<div class="chart-bar-wrap">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:1px;width:100%;max-width:28px;">
+        <div class="chart-bar pos" style="height:${posH}px"></div>
+        <div class="chart-bar neg" style="height:${negH}px"></div>
+      </div>
+      <div class="chart-day">${day}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderRecentTable(items) {
+  const tbody = document.getElementById('recentTableBody');
+  if (!items.length) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔬</div><div class="empty-title">Nenhuma triagem ainda</div><p>Clique em "Nova Triagem" para começar.</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = items.map(item => `
+    <tr>
+      <td><span class="mono">${item.id?.slice(0,16) || '—'}…</span></td>
+      <td style="color:var(--muted);font-size:12px">${formatDate(item.created_at)}</td>
+      <td>${labelBadge(item.label)}</td>
+      <td><span style="font-family:var(--font-mono);font-size:12px">${pct(item.confidence)}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ── TRIAGE ──
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+
+fileInput.addEventListener('change', e => addFiles(Array.from(e.target.files)));
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  addFiles(Array.from(e.dataTransfer.files).filter(f => /\.(jpe?g|png)$/i.test(f.name)));
+});
+
+function addFiles(files) {
+  files.forEach(f => { if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f); });
+  renderFileList();
+}
+
+function renderFileList() {
+  fileList.innerHTML = selectedFiles.map((f, i) => `
+    <div class="file-chip">
+      🖼 ${f.name}
+      <button class="file-remove" onclick="removeFile(${i})" title="Remover">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeFile(i) {
+  selectedFiles.splice(i, 1);
+  renderFileList();
+}
+
+function resetTriage() {
+  selectedFiles = [];
+  renderFileList();
+  fileInput.value = '';
+  ['patientName','birthDate','gender','examDate'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = '';
+  });
+  document.getElementById('resultPanel').classList.remove('visible');
+  document.getElementById('triageError').classList.remove('visible');
+  document.getElementById('triageLoading').classList.remove('visible');
+}
+
+function setLoading(on, msg) {
+  const el = document.getElementById('triageLoading');
+  el.classList.toggle('visible', on);
+  if (msg) document.getElementById('loadingMsg').textContent = msg;
+  document.getElementById('analyzeBtn').disabled = on;
+}
+
+function showError(code, msg) {
+  const box = document.getElementById('triageError');
+  box.classList.add('visible');
+  document.getElementById('errorCode').textContent = code || '';
+  document.getElementById('errorMsg').textContent = msg || 'Erro desconhecido.';
+}
+
+async function submitTriage() {
+  const name = document.getElementById('patientName').value.trim();
+  const birth = document.getElementById('birthDate').value;
+  const gender = document.getElementById('gender').value;
+  const examDate = document.getElementById('examDate').value;
+
+  document.getElementById('triageError').classList.remove('visible');
+  document.getElementById('resultPanel').classList.remove('visible');
+
+  if (!name || !birth || !gender || !examDate) {
+    showError('', 'Por favor, preencha todos os campos do paciente.');
+    return;
+  }
+  if (!selectedFiles.length) {
+    showError('', 'Selecione ao menos uma imagem para análise.');
+    return;
+  }
+
+  try {
+    setLoading(true, 'Registrando exame…');
+
+    const examRes = await fetch(API + '/api/v1/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patient_name: name, birth_date: birth, gender, exam_date: examDate })
+    });
+
+    const examData = await examRes.json();
+    if (!examRes.ok) { showError(examData.error, examData.message); setLoading(false); return; }
+
+    const examId = examData.exam_id;
+
+    setLoading(true, `Enviando ${selectedFiles.length} imagem(ns) para triagem…`);
+
+    const formData = new FormData();
+    selectedFiles.forEach(f => formData.append('files', f));
+
+    const predictRes = await fetch(`${API}/api/v1/predict-batch?exam_id=${encodeURIComponent(examId)}`, {
+      method: 'POST',
+      body: formData
+    });
+
+    const predictData = await predictRes.json();
+    if (!predictRes.ok) { showError(predictData.error, predictData.message); setLoading(false); return; }
+
+    setLoading(false);
+    showResult(predictData);
+
+  } catch(e) {
+    setLoading(false);
+    showError('network_error', 'Não foi possível conectar à API. Verifique se o servidor está rodando.');
+  }
+}
+
+function showResult(data) {
+  const panel = document.getElementById('resultPanel');
+  panel.classList.add('visible');
+
+  const labelMap = {
+    suspected_positive: { text: 'Suspeito Positivo', cls: 'positive', desc: 'Amostra apresenta sinais sugestivos de infecção por malária. Recomenda-se confirmação clínica imediata.' },
+    likely_negative:    { text: 'Provavelmente Negativo', cls: 'negative', desc: 'Nenhum sinal evidente de infecção detectado. Avaliação clínica adicional se sintomas persistirem.' },
+    uncertain:          { text: 'Incerto', cls: 'uncertain', desc: 'Resultado inconclusivo. Repetição do exame com nova amostra é recomendada.' }
+  };
+
+  const info = labelMap[data.label] || { text: data.label, cls: '', desc: '' };
+  const conf = data.confidence ?? 0;
+  const confPct = Math.round(conf * 100);
+
+  document.getElementById('resultLabel').textContent = info.text;
+  document.getElementById('resultLabel').className = 'result-label ' + info.cls;
+  document.getElementById('resultDesc').textContent = info.desc;
+  document.getElementById('resProcessed').textContent = data.images_processed ?? '—';
+  document.getElementById('resRejected').textContent = data.images_rejected ?? '—';
+  document.getElementById('modelTag').textContent = '⚙ ' + (data.model_version || '—');
+  document.getElementById('ringCenter').textContent = confPct + '%';
+  document.getElementById('ringCenter').style.color = info.cls === 'positive' ? 'var(--crimson)' : info.cls === 'negative' ? 'var(--emerald)' : 'var(--amber)';
+
+  const ring = document.getElementById('ringFill');
+  ring.className = 'ring-fill ' + info.cls;
+  const circumference = 263;
+  // Se conf vier fora do esperado, evita NaN no dashoffset.
+  const safeConf = Number.isFinite(conf) ? Math.max(0, Math.min(1, conf)) : 0;
+  setTimeout(() => {
+    ring.style.strokeDashoffset = circumference - (safeConf * circumference);
+  }, 50);
+}
+
+// ── HISTORY ──
+async function loadHistory() {
+  const label = document.getElementById('filterLabel').value;
+  const from  = document.getElementById('filterFrom').value;
+  const to    = document.getElementById('filterTo').value;
+
+  // API atual não aceita filtros por label/from/to. Mantemos os filtros na UI,
+  // mas buscamos apenas limit/offset para evitar incompatibilidades.
+  let url = `${API}/api/v1/occurrences?limit=${LIMIT}&offset=${historyOffset}`;
+
+  const tbody = document.getElementById('historyTableBody');
+  tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><p>Carregando…</p></div></td></tr>';
+
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    historyTotal = data.total ?? 0;
+
+    if (!data.items?.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhuma ocorrência encontrada</div><p>Tente ajustar os filtros ou registre uma nova triagem.</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = data.items.map(item => `
+        <tr>
+          <td><span class="mono">${item.id?.slice(0,20) || '—'}…</span></td>
+          <td style="color:var(--muted);font-size:12px">${formatDate(item.created_at)}</td>
+          <td>${labelBadge(item.label)}</td>
+          <td><span style="font-family:var(--font-mono);font-size:12px">${pct(item.confidence)}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    const start = historyOffset + 1;
+    const end = Math.min(historyOffset + LIMIT, historyTotal);
+    document.getElementById('paginationInfo').textContent = historyTotal > 0 ? `${start}–${end} de ${historyTotal} registros` : '0 registros';
+    document.getElementById('prevBtn').disabled = historyOffset === 0;
+    document.getElementById('nextBtn').disabled = historyOffset + LIMIT >= historyTotal;
+
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><p>Erro ao carregar histórico. Verifique a conexão com a API.</p></div></td></tr>';
+  }
+}
+
+function changePage(dir) {
+  historyOffset = Math.max(0, historyOffset + dir * LIMIT);
+  loadHistory();
+}
+
+function clearHistoryFilters() {
+  document.getElementById('filterLabel').value = '';
+  document.getElementById('filterFrom').value = '';
+  document.getElementById('filterTo').value = '';
+  historyOffset = 0;
+  loadHistory();
+}
+
+// ── HELPERS ──
+function labelBadge(label) {
+  const map = {
+    suspected_positive: ['badge-positive', 'Suspeito Positivo'],
+    likely_negative:    ['badge-negative', 'Provavelmente Negativo'],
+    uncertain:          ['badge-uncertain', 'Incerto']
+  };
+  const [cls, txt] = map[label] || ['', label || '—'];
+  return `<span class="badge ${cls}">${txt}</span>`;
+}
+
+function pct(v) {
+  return v != null ? (v * 100).toFixed(1) + '%' : '—';
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  } catch { return iso; }
+}
+
+// ── INIT ──
+checkHealth();
+setInterval(checkHealth, 30000);
+loadDashboard();
+
+// Set default exam date to today
+document.getElementById('examDate').value = new Date().toISOString().slice(0,10);
+</script>
+</body>
+</html>

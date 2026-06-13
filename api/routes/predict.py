@@ -3,11 +3,13 @@ from fastapi.responses import JSONResponse
 
 from api.schemas.response import PredictionResponse
 from core.config import get_settings
+from core.database import create_triage, init_db
 from ml.aggregation import mean_score
 from ml.inference import InferenceError, get_inference_engine
 from ml.preprocess import decode_image, preprocess_image
 from ml.quality import validate_image_quality
 from ml.thresholds import classify_score
+
 
 router = APIRouter(prefix="/api/v1", tags=["prediction"])
 
@@ -20,10 +22,22 @@ def api_error(status_code: int, error: str, message: str) -> JSONResponse:
 
 
 @router.post("/predict-batch", response_model=PredictionResponse)
-async def predict_batch(files: list[UploadFile] = File(default_factory=list)):
+async def predict_batch(
+    exam_id: str = "",
+    files: list[UploadFile] = File(default_factory=list),
+):
+
     settings = get_settings()
 
+    if not exam_id:
+        return api_error(
+            400,
+            "exam_id_required",
+            "exam_id is required. Create the exam first via POST /api/v1/exams.",
+        )
+
     if not files:
+
         return api_error(
             400,
             "no_images_provided",
@@ -120,12 +134,30 @@ async def predict_batch(files: list[UploadFile] = File(default_factory=list)):
 
 
 
+
     final_score = mean_score(scores)
+    label = classify_score(final_score, settings).value
+    confidence = round(final_score, 4)
+
+
+    triage_id = create_triage(
+        exam_id=exam_id,
+        label=label,
+        confidence=confidence,
+        images_processed=len(scores),
+        images_rejected=rejected,
+        model_version=settings.model_version,
+        decode_failures=decode_failures,
+        quality_failures=quality_failures,
+        quality_reasons=quality_reasons,
+    )
 
     return {
-        "label": classify_score(final_score, settings).value,
-        "confidence": round(final_score, 4),
+        "label": label,
+        "confidence": confidence,
         "images_processed": len(scores),
         "images_rejected": rejected,
         "model_version": settings.model_version,
+        "triage_id": triage_id,
     }
+
